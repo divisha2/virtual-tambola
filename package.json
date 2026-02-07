@@ -1,0 +1,23 @@
+{
+  "name": "virtual-tambola",
+  "version": "1.0.0",
+  "description": "Real-time virtual Tambola game platform",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "security-check": "node .env-check.js",
+    "audit": "npm audit && cd frontend && npm audit && cd ../backend && npm audit",
+    "precommit": "npm run security-check"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
