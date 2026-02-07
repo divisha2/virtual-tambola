@@ -144,6 +144,7 @@ body::after {
   background: var(--color-surface);
   color: var(--color-text);
   transition: border-color 0.2s ease;
+  text-transform: none; /* Explicitly prevent uppercase */
 }
 
 .input:focus {

@@ -3,18 +3,24 @@ import { motion } from 'framer-motion';
 
 function ClaimVerification({ claim, onVerify, calledNumbers }) {
   const renderTicket = () => {
+    // Ensure ticket is properly formatted as 3 rows × 9 columns
+    const grid = claim.ticket.map(row => {
+      if (Array.isArray(row)) return row;
+      return Object.values(row);
+    });
+
     return (
-      <div className="grid grid-cols-9 gap-1 mb-4">
-        {claim.ticket.map((row, rowIndex) => (
-          <React.Fragment key={rowIndex}>
+      <div className="mb-4">
+        {grid.map((row, rowIndex) => (
+          <div key={rowIndex} className="grid grid-cols-9 gap-1 mb-1">
             {row.map((cell, colIndex) => {
               const isCalled = cell !== null && calledNumbers.includes(cell);
               return (
                 <div
                   key={`${rowIndex}-${colIndex}`}
                   className={`
-                    aspect-square flex items-center justify-center text-xs
-                    border ${cell === null ? 'border-transparent' : 'border-text-muted'}
+                    aspect-square flex items-center justify-center text-sm font-bold
+                    border-2 ${cell === null ? 'border-transparent bg-transparent' : 'border-text-muted'}
                     ${isCalled ? 'bg-primary text-background' : 'bg-surface text-text'}
                   `}
                 >
@@ -22,7 +28,7 @@ function ClaimVerification({ claim, onVerify, calledNumbers }) {
                 </div>
               );
             })}
-          </React.Fragment>
+          </div>
         ))}
       </div>
     );
@@ -37,7 +43,7 @@ function ClaimVerification({ claim, onVerify, calledNumbers }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           // Optional: close on backdrop click
@@ -45,12 +51,14 @@ function ClaimVerification({ claim, onVerify, calledNumbers }) {
       }}
     >
       <motion.div
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.9, y: 20 }}
-        className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className="card w-full max-w-md h-full overflow-y-auto rounded-none border-l-4 border-accent"
+        style={{ borderRadius: 0 }}
       >
-        <h2 className="text-display text-3xl mb-4 text-accent">
+        <h2 className="text-display text-2xl mb-4 text-accent">
           CLAIM VERIFICATION
         </h2>
 
@@ -75,19 +83,25 @@ function ClaimVerification({ claim, onVerify, calledNumbers }) {
           </p>
         </div>
 
-        <div className="flex gap-4">
-          <button
-            onClick={() => onVerify(claim.claimId, false)}
-            className="btn btn-secondary flex-1"
-          >
-            Reject
-          </button>
+        <div className="flex flex-col gap-3">
           <button
             onClick={() => onVerify(claim.claimId, true)}
-            className="btn btn-primary flex-1"
+            className="btn btn-primary w-full"
           >
-            Approve
+            ✓ Approve
           </button>
+          <button
+            onClick={() => onVerify(claim.claimId, false)}
+            className="btn btn-secondary w-full"
+          >
+            ✗ Reject
+          </button>
+        </div>
+
+        <div className="mt-6 p-3 bg-surface border-2 border-text-muted">
+          <p className="text-xs text-text-muted">
+            💡 Tip: Check the number board on the left to verify all marked numbers have been called.
+          </p>
         </div>
       </motion.div>
     </motion.div>

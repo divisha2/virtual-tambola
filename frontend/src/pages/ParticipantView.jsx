@@ -18,6 +18,7 @@ function ParticipantView() {
   const [claimStatus, setClaimStatus] = useState(null); // pending, approved, rejected
   const [winner, setWinner] = useState(null);
   const [error, setError] = useState('');
+  const [lastCalledNumber, setLastCalledNumber] = useState(null); // Track last called number for auto-marking
 
   useEffect(() => {
     const socketInstance = getSocket();
@@ -74,16 +75,20 @@ function ParticipantView() {
 
     // Listen for number called
     socketInstance.on('number_called', (data) => {
+      // Auto-mark the previous number if user missed it
+      if (lastCalledNumber !== null && !markedNumbers.includes(lastCalledNumber)) {
+        setMarkedNumbers(prev => {
+          if (!prev.includes(lastCalledNumber)) {
+            return [...prev, lastCalledNumber];
+          }
+          return prev;
+        });
+      }
+      
+      // Update current and previous numbers
       setCurrentNumber(data.current);
       setPreviousNumbers(data.previous);
-      
-      // Mark number on ticket if present
-      if (ticket && data.number) {
-        const hasNumber = ticket.grid.some(row => row.includes(data.number));
-        if (hasNumber) {
-          setMarkedNumbers(prev => [...prev, data.number]);
-        }
-      }
+      setLastCalledNumber(data.number);
     });
 
     // Listen for claim approved
@@ -122,10 +127,22 @@ function ParticipantView() {
       socketInstance.off('game_paused');
       socketInstance.off('game_resumed');
     };
-  }, [ticket]);
+  }, [roomCode]); // Only depend on roomCode, not ticket
 
   const handleClaimClick = () => {
     setShowClaimModal(true);
+  };
+
+  const handleToggleMark = (number) => {
+    setMarkedNumbers((prev) => {
+      if (prev.includes(number)) {
+        // Unmark the number
+        return prev.filter((n) => n !== number);
+      } else {
+        // Mark the number
+        return [...prev, number];
+      }
+    });
   };
 
   const handleSubmitClaim = (prizeType) => {
@@ -223,7 +240,11 @@ function ParticipantView() {
           className="mb-6"
         >
           {ticket ? (
-            <TambolaTicket ticket={ticket} markedNumbers={markedNumbers} />
+            <TambolaTicket 
+              ticket={ticket} 
+              markedNumbers={markedNumbers}
+              onToggleMark={handleToggleMark}
+            />
           ) : (
             <div className="card text-center">
               <p className="text-text-muted">Loading ticket...</p>

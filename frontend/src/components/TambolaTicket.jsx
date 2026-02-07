@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-function TambolaTicket({ ticket, markedNumbers = [] }) {
+function TambolaTicket({ ticket, markedNumbers = [], onToggleMark }) {
   const markedSet = new Set(markedNumbers);
 
   // Ensure grid is properly formatted as arrays
@@ -17,6 +17,12 @@ function TambolaTicket({ ticket, markedNumbers = [] }) {
       </div>
     );
   }
+
+  const handleCellClick = (number) => {
+    if (number !== null && onToggleMark) {
+      onToggleMark(number);
+    }
+  };
 
   return (
     <div className="card">
@@ -38,6 +44,7 @@ function TambolaTicket({ ticket, markedNumbers = [] }) {
                       ? { scale: [1, 1.2, 1], transition: { duration: 0.3 } }
                       : {}
                   }
+                  onClick={() => handleCellClick(cell)}
                   className={`
                     aspect-square flex items-center justify-center
                     text-lg font-bold border-2
@@ -45,8 +52,8 @@ function TambolaTicket({ ticket, markedNumbers = [] }) {
                       cell === null
                         ? 'border-transparent bg-transparent'
                         : isMarked
-                        ? 'border-primary bg-primary text-background'
-                        : 'border-text-muted bg-surface text-text'
+                        ? 'border-primary bg-primary text-background cursor-pointer'
+                        : 'border-text-muted bg-surface text-text cursor-pointer hover:border-primary'
                     }
                     transition-all duration-200
                   `}
@@ -61,6 +68,9 @@ function TambolaTicket({ ticket, markedNumbers = [] }) {
 
       <div className="mt-4 text-center text-xs text-text-muted">
         Marked: {markedNumbers.length} / 15
+        <span className="block mt-1 text-xs opacity-75">
+          Click numbers to mark/unmark
+        </span>
       </div>
     </div>
   );
