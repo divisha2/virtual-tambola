@@ -25,14 +25,26 @@ if (USE_MEMORY_STORE) {
   let serviceAccount;
   
   // Try to use service account JSON file first (for Render deployment)
-  const serviceAccountPath = join(__dirname, 'serviceAccount.json');
+  // Render mounts secret files in /etc/secrets/
+  const serviceAccountPath = process.env.NODE_ENV === 'production' 
+    ? '/etc/secrets/serviceAccount.json'
+    : join(__dirname, 'serviceAccount.json');
+  
   try {
+    console.log('Attempting to read service account from:', serviceAccountPath);
     const serviceAccountFile = readFileSync(serviceAccountPath, 'utf8');
     serviceAccount = JSON.parse(serviceAccountFile);
-    console.log('Using service account JSON file');
+    console.log('✓ Successfully loaded service account JSON file');
   } catch (error) {
-    // Fall back to environment variables (for local development)
-    console.log('Using environment variables for Firebase config');
+    console.log('Could not read service account file:', error.message);
+    console.log('Falling back to environment variables');
+    
+    // Validate required environment variables
+    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_PRIVATE_KEY || !process.env.FIREBASE_CLIENT_EMAIL) {
+      console.error('ERROR: Missing required Firebase environment variables');
+      console.error('Required: FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL');
+      throw new Error('Firebase configuration incomplete. Please add serviceAccount.json as a Secret File in Render.');
+    }
     
     let privateKey = process.env.FIREBASE_PRIVATE_KEY;
     
