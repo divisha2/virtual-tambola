@@ -16,9 +16,19 @@ if (USE_MEMORY_STORE) {
   console.log('Using Firebase Realtime Database');
   const admin = (await import('firebase-admin')).default;
   
+  // Handle private key - it might have escaped newlines or be in quotes
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  
+  if (privateKey) {
+    // Remove surrounding quotes if present
+    privateKey = privateKey.replace(/^["']|["']$/g, '');
+    // Replace literal \n with actual newlines
+    privateKey = privateKey.replace(/\\n/g, '\n');
+  }
+  
   const serviceAccount = {
     projectId: process.env.FIREBASE_PROJECT_ID,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    privateKey: privateKey,
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
   };
 
