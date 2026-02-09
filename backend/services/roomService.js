@@ -69,32 +69,46 @@ class RoomService {
    * @returns {Promise<Object>} Room data
    */
   async createRoom(hostName, hostId) {
-    // Validate host name
-    if (!this.validateDisplayName(hostName)) {
-      throw new Error('Invalid host name. Must be 2-30 alphanumeric characters.');
+    try {
+      console.log('[RoomService] Starting createRoom for:', hostName);
+      
+      // Validate host name
+      if (!this.validateDisplayName(hostName)) {
+        throw new Error('Invalid host name. Must be 2-30 alphanumeric characters.');
+      }
+      console.log('[RoomService] Host name validated');
+
+      console.log('[RoomService] Generating room code...');
+      const roomCode = await this.generateRoomCode();
+      console.log('[RoomService] Room code generated:', roomCode);
+      
+      const now = Date.now(); // Use timestamp
+
+      const roomData = {
+        roomCode,
+        hostId,
+        hostName: hostName.trim(),
+        status: 'waiting',
+        createdAt: now,
+        startedAt: null,
+        prizes: [],
+        prizesLocked: false,
+        calledNumbers: [],
+        currentNumber: null,
+        participants: [],
+        maxParticipants: 50,
+      };
+
+      console.log('[RoomService] Saving room data to database...');
+      await this.roomsCollection.doc(roomCode).set(roomData);
+      console.log('[RoomService] Room data saved successfully');
+
+      return roomData;
+    } catch (error) {
+      console.error('[RoomService] Error in createRoom:', error);
+      console.error('[RoomService] Error stack:', error.stack);
+      throw error;
     }
-
-    const roomCode = await this.generateRoomCode();
-    const now = Date.now(); // Use timestamp
-
-    const roomData = {
-      roomCode,
-      hostId,
-      hostName: hostName.trim(),
-      status: 'waiting',
-      createdAt: now,
-      startedAt: null,
-      prizes: [],
-      prizesLocked: false,
-      calledNumbers: [],
-      currentNumber: null,
-      participants: [],
-      maxParticipants: 50,
-    };
-
-    await this.roomsCollection.doc(roomCode).set(roomData);
-
-    return roomData;
   }
 
   /**
