@@ -64,8 +64,10 @@ if (USE_MEMORY_STORE) {
 
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: process.env.FIREBASE_DATABASE_URL,
+    databaseURL: process.env.FIREBASE_DATABASE_URL || 'https://virtual-tambola-69fab-default-rtdb.asia-southeast1.firebasedatabase.app',
   });
+
+  console.log('Firebase Admin initialized with database URL:', process.env.FIREBASE_DATABASE_URL);
 
   const database = admin.database();
   db = new RealtimeDBAdapter(database);
