@@ -59,16 +59,23 @@ io.on('connection', (socket) => {
 
   // Create room (host)
   socket.on('create_room', async (data, callback) => {
+    console.log('Create room request received:', { hostName: data.hostName, userId: data.userId });
+    
     try {
       const { hostName, userId } = data;
+      
+      console.log('Creating room...');
       const room = await roomService.createRoom(hostName, userId);
+      console.log('Room created:', room.roomCode);
       
       // Generate ticket for host
+      console.log('Generating ticket...');
       const ticket = await ticketService.generateTicket(
         room.roomCode,
         userId,
         hostName
       );
+      console.log('Ticket generated:', ticket.ticketId);
 
       // Join socket room
       socket.join(room.roomCode);
@@ -85,6 +92,7 @@ io.on('connection', (socket) => {
       }
       roomSockets.get(room.roomCode).add(socket.id);
 
+      console.log('Room creation successful, sending response');
       callback({
         success: true,
         room,
@@ -92,6 +100,7 @@ io.on('connection', (socket) => {
       });
     } catch (error) {
       console.error('Create room error:', error);
+      console.error('Error stack:', error.stack);
       callback({
         success: false,
         error: error.message,

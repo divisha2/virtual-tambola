@@ -47,8 +47,17 @@ function Landing() {
       const socket = getSocket();
       const userId = auth.currentUser?.uid || `anon-${Date.now()}`;
 
-      socket.emit('create_room', { hostName: hostName.trim(), userId }, (response) => {
+      // Add timeout for callback
+      const timeout = setTimeout(() => {
         setLoading(false);
+        setError('Server timeout. Please check your connection and try again.');
+      }, 10000); // 10 second timeout
+
+      socket.emit('create_room', { hostName: hostName.trim(), userId }, (response) => {
+        clearTimeout(timeout);
+        setLoading(false);
+
+        console.log('Create room response:', response);
 
         if (response.success) {
           // Store room and user info in localStorage
@@ -66,6 +75,7 @@ function Landing() {
       });
     } catch (err) {
       setLoading(false);
+      console.error('Create room error:', err);
       setError('Connection error. Please try again.');
     }
   };
