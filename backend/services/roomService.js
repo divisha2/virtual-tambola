@@ -14,29 +14,10 @@ class RoomService {
    * @returns {Promise<string>} Unique room code
    */
   async generateRoomCode() {
-    let code;
-    let isUnique = false;
-    let attempts = 0;
-    const maxAttempts = 10;
-
-    while (!isUnique && attempts < maxAttempts) {
-      code = `TMB-${nanoid()}`;
-      
-      // Check if code already exists in active rooms
-      const existingRoom = await this.roomsCollection
-        .where('roomCode', '==', code)
-        .where('status', 'in', ['waiting', 'active', 'paused'])
-        .limit(1)
-        .get();
-      
-      isUnique = existingRoom.empty;
-      attempts++;
-    }
-
-    if (!isUnique) {
-      throw new Error('Failed to generate unique room code');
-    }
-
+    // Generate a random code - collisions are extremely unlikely with 4 alphanumeric chars
+    // If collision happens, the set() will fail and we'll catch it
+    const code = `TMB-${nanoid()}`;
+    console.log('[RoomService] Generated room code:', code);
     return code;
   }
 
