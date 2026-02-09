@@ -13,15 +13,36 @@ dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
+
+// Remove trailing slash from frontend URL if present
+const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+
+console.log('Configuring CORS for frontend:', frontendUrl);
+
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: frontendUrl,
     methods: ['GET', 'POST'],
+    credentials: true,
   },
+  path: '/socket.io/',
+  transports: ['websocket', 'polling'],
 });
 
-app.use(cors());
+app.use(cors({
+  origin: frontendUrl,
+  credentials: true,
+}));
 app.use(express.json());
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Virtual Tambola Backend API',
+    status: 'running',
+    socketPath: '/socket.io/',
+  });
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
