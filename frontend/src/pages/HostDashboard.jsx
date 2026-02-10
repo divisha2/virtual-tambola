@@ -25,9 +25,20 @@ function HostDashboard() {
     const socketInstance = getSocket();
     setSocket(socketInstance);
 
-    // Fetch initial room state
+    // Check if host is rejoining
+    const storedRoomCode = localStorage.getItem('roomCode');
+    const storedRole = localStorage.getItem('role');
+    const userId = localStorage.getItem('userId');
+
+    // If stored room doesn't match URL or not a host, redirect to home
+    if (!userId || storedRole !== 'host' || storedRoomCode !== roomCode) {
+      console.log('Invalid host session, redirecting...');
+      navigate('/');
+      return;
+    }
+
+    // Fetch initial room state and reconnect
     const fetchRoomState = async () => {
-      const userId = localStorage.getItem('userId');
       socketInstance.emit('reconnect_user', { 
         roomCode, 
         userId, 
@@ -50,6 +61,9 @@ function HostDashboard() {
             setCurrentNumber(response.history.current);
             setPreviousNumbers(response.history.previous || []);
           }
+        } else {
+          setError('Failed to reconnect. Please create a new room.');
+          setTimeout(() => navigate('/'), 3000);
         }
       });
     };
@@ -145,6 +159,14 @@ function HostDashboard() {
     });
   };
 
+  const handleNewGame = () => {
+    // Clear local storage and navigate to home
+    localStorage.removeItem('roomCode');
+    localStorage.removeItem('ticketId');
+    localStorage.removeItem('ticket');
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen p-4 md:p-8">
       {/* Header */}
@@ -164,6 +186,13 @@ function HostDashboard() {
           </div>
 
           <div className="flex gap-4">
+            <button
+              onClick={handleNewGame}
+              className="btn btn-secondary text-sm"
+            >
+              New Game
+            </button>
+
             {gameStatus === 'waiting' && prizes.length > 0 && (
               <button
                 onClick={handleStartGame}

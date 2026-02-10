@@ -269,6 +269,8 @@ io.on('connection', (socket) => {
 
   // Verify claim (host only)
   socket.on('verify_claim', async (data, callback) => {
+    console.log('Verify claim request:', data);
+    
     try {
       const { claimId, approved, hostId } = data;
       
@@ -294,6 +296,26 @@ io.on('connection', (socket) => {
             });
           }
         }
+
+        // Check if there are other pending claims for the same prize
+        const pendingClaims = await claimService.getPendingClaims(result.claim.roomCode);
+        const samePrizeClaims = pendingClaims.filter(c => c.prizeType === result.claim.prizeType);
+        
+        // Notify other claimants that prize is no longer available
+        if (samePrizeClaims.length > 0) {
+          for (const pendingClaim of samePrizeClaims) {
+            for (const socketId of roomSocketSet) {
+              const userInfo = socketToUser.get(socketId);
+              if (userInfo && userInfo.userId === pendingClaim.userId) {
+                io.to(socketId).emit('claim_rejected', {
+                  claimId: pendingClaim.claimId,
+                  prizeType: pendingClaim.prizeType,
+                  reason: 'Prize already claimed by another player',
+                });
+              }
+            }
+          }
+        }
       } else {
         result = await claimService.rejectClaim(claimId, hostId);
         
@@ -305,6 +327,7 @@ io.on('connection', (socket) => {
             io.to(socketId).emit('claim_rejected', {
               claimId,
               prizeType: result.claim.prizeType,
+              reason: 'Claim rejected by host',
             });
           }
         }
@@ -313,6 +336,7 @@ io.on('connection', (socket) => {
       callback({ success: true });
     } catch (error) {
       console.error('Verify claim error:', error);
+      console.error('Error stack:', error.stack);
       callback({
         success: false,
         error: error.message,
